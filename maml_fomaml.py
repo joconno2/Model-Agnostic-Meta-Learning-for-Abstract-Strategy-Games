@@ -12,6 +12,7 @@ def inner_adapt_fomaml(
     inner_lr,
     inner_steps,
     lambda_value,
+    legal_mask=None,
     verbose=False,
 ):
     """
@@ -28,7 +29,9 @@ def inner_adapt_fomaml(
 
         logits, v_pred = functional_call(model, p_req, (Xs,))
         loss, lp, lv = combined_loss(
-            logits, v_pred, ys_pol, ys_val, lambda_value=lambda_value
+            logits, v_pred, ys_pol, ys_val,
+            lambda_value=lambda_value,
+            legal_mask=legal_mask,
         )
 
         grads = torch.autograd.grad(
@@ -66,6 +69,7 @@ def meta_step_fomaml(
     inner_lr,
     inner_steps,
     lambda_value,
+    grad_clip=1.0,
     verbose=False,
 ):
     """
@@ -86,7 +90,7 @@ def meta_step_fomaml(
     task_gids = []
 
     for task_idx, task in enumerate(task_batch, start=1):
-        sX, sy_pol, sy_val, qX, qy_pol, qy_val, gid = task
+        sX, sy_pol, sy_val, s_legal, qX, qy_pol, qy_val, q_legal, gid = task
         task_gids.append(int(gid))
 
         sX = torch.tensor(sX, dtype=torch.float32, device=device)
@@ -96,6 +100,15 @@ def meta_step_fomaml(
         qX = torch.tensor(qX, dtype=torch.float32, device=device)
         qy_pol = torch.tensor(qy_pol, dtype=torch.long, device=device)
         qy_val = torch.tensor(qy_val, dtype=torch.float32, device=device)
+
+        s_legal_t = (
+            torch.tensor(s_legal, dtype=torch.bool, device=device)
+            if s_legal is not None else None
+        )
+        q_legal_t = (
+            torch.tensor(q_legal, dtype=torch.bool, device=device)
+            if q_legal is not None else None
+        )
 
         if verbose:
             print(f"\n  Task {task_idx}/{len(task_batch)} | gid={gid}")
@@ -119,6 +132,7 @@ def meta_step_fomaml(
             inner_lr=inner_lr,
             inner_steps=inner_steps,
             lambda_value=lambda_value,
+            legal_mask=s_legal_t,
             verbose=verbose,
         )
 
@@ -129,7 +143,9 @@ def meta_step_fomaml(
 
         q_logits, q_v = functional_call(model, adapted_req, (qX,))
         q_loss, q_lp, q_lv = combined_loss(
-            q_logits, q_v, qy_pol, qy_val, lambda_value=lambda_value
+            q_logits, q_v, qy_pol, qy_val,
+            lambda_value=lambda_value,
+            legal_mask=q_legal_t,
         )
 
         if verbose:
@@ -160,18 +176,24 @@ def meta_step_fomaml(
     for name in accum_grads:
         accum_grads[name] /= num_tasks
 
-    grad_norm_sq = 0.0
     for name, p in model.named_parameters():
         p.grad = accum_grads[name]
-        grad_norm_sq += float((p.grad.detach() ** 2).sum().item())
 
-    grad_norm = grad_norm_sq ** 0.5
+    # Gradient clipping on the meta-gradient for stability.
+    if grad_clip is not None and grad_clip > 0:
+        grad_norm = float(torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip))
+    else:
+        grad_norm_sq = 0.0
+        for p in model.parameters():
+            if p.grad is not None:
+                grad_norm_sq += float((p.grad.detach() ** 2).sum().item())
+        grad_norm = grad_norm_sq ** 0.5
 
     optimizer.step()
 
     if verbose:
         print(f"\n  Meta-batch gids: {task_gids}")
-        print(f"  Meta-step grad L2 norm: {grad_norm:.6f}")
+        print(f"  Meta-step grad L2 norm (post-clip): {grad_norm:.6f}")
 
     return (
         meta_total / num_tasks,

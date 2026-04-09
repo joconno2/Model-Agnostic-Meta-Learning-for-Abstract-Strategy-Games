@@ -39,7 +39,7 @@ def evaluate_meta_loss(
     total_loss = 0.0
 
     for task in task_batch:
-        sX, sy_pol, sy_val, qX, qy_pol, qy_val, _ = task
+        sX, sy_pol, sy_val, s_legal, qX, qy_pol, qy_val, q_legal, _ = task
 
         sX = torch.tensor(sX, dtype=torch.float32, device=device)
         sy_pol = torch.tensor(sy_pol, dtype=torch.long, device=device)
@@ -48,6 +48,15 @@ def evaluate_meta_loss(
         qX = torch.tensor(qX, dtype=torch.float32, device=device)
         qy_pol = torch.tensor(qy_pol, dtype=torch.long, device=device)
         qy_val = torch.tensor(qy_val, dtype=torch.float32, device=device)
+
+        s_legal_t = (
+            torch.tensor(s_legal, dtype=torch.bool, device=device)
+            if s_legal is not None else None
+        )
+        q_legal_t = (
+            torch.tensor(q_legal, dtype=torch.bool, device=device)
+            if q_legal is not None else None
+        )
 
         base_params = {n: p for n, p in model.named_parameters()}
 
@@ -60,6 +69,7 @@ def evaluate_meta_loss(
             inner_lr=inner_lr,
             inner_steps=inner_steps,
             lambda_value=lambda_value,
+            legal_mask=s_legal_t,
             verbose=False,
         )
 
@@ -71,6 +81,7 @@ def evaluate_meta_loss(
                 qy_pol,
                 qy_val,
                 lambda_value=lambda_value,
+                legal_mask=q_legal_t,
             )
 
         total_loss += loss.item()
@@ -149,10 +160,15 @@ def main():
     k_support = 8
     k_query = 8
 
-    inner_lr = 0.01
-    inner_steps = 1
-    outer_lr = 1e-3 #0.001
+    # FOMAML with inner_steps=1 and tiny inner_lr is indistinguishable from
+    # plain joint training. 5 steps @ 0.05 gives the inner loop enough room
+    # to actually adapt on the support set so the query gradient carries
+    # meta-signal.
+    inner_lr = 0.05
+    inner_steps = 5
+    outer_lr = 1e-3
     lambda_value = 0.5
+    grad_clip = 1.0
 
     val_every = 50
     val_num_tasks = 32
@@ -199,6 +215,7 @@ def main():
         f.write(f"inner_steps={inner_steps}\n")
         f.write(f"outer_lr={outer_lr}\n")
         f.write(f"lambda_value={lambda_value}\n")
+        f.write(f"grad_clip={grad_clip}\n")
         f.write(f"val_every={val_every}\n")
         f.write(f"val_num_tasks={val_num_tasks}\n")
         f.write(f"ckpt_every={ckpt_every}\n")
@@ -221,13 +238,16 @@ def main():
             inner_lr=inner_lr,
             inner_steps=inner_steps,
             lambda_value=lambda_value,
+            grad_clip=grad_clip,
             verbose=False,
         )
 
         train_meta_history.append(meta_loss)
 
         first_gid = task_batch[0][-1]
-        print(f"[TRAIN it {it}] gid={first_gid} meta={meta_loss:.4f}")
+        print(f"[TRAIN it {it}] gid={first_gid} "
+              f"meta={meta_loss:.4f} pol={pol_loss:.4f} val={val_loss:.4f} "
+              f"gn={grad_norm:.3f}")
 
         if it % val_every == 0:
             val_meta = evaluate_meta_loss(
