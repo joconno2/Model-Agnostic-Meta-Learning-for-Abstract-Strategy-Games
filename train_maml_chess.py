@@ -1,4 +1,3 @@
-import os
 import torch
 import matplotlib.pyplot as plt
 from torch.func import functional_call
@@ -85,6 +84,7 @@ def save_checkpoint(
     model,
     optimizer,
     iteration,
+    best_val_meta,
     meta_iters,
     meta_batch_size,
     k_support,
@@ -100,6 +100,7 @@ def save_checkpoint(
 ):
     checkpoint = {
         "iteration": iteration,
+        "best_val_meta": best_val_meta,
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
         "meta_iters": meta_iters,
@@ -119,25 +120,38 @@ def save_checkpoint(
     print(f"Saved: {filepath}")
 
 
+def save_loss_plot(train_meta_history, val_meta_history, val_meta_x, outpath):
+    plt.figure(figsize=(10, 6))
+    plt.plot(range(1, len(train_meta_history) + 1), train_meta_history, label="Train Meta Loss")
+    plt.plot(val_meta_x, val_meta_history, label="Validation Meta Loss")
+    plt.xlabel("Iteration")
+    plt.ylabel("Meta Loss")
+    plt.title("MAML Training vs Validation Meta Loss")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(outpath, dpi=200)
+    print(f"Saved: {outpath}")
+
+
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
-
-    # Official run parameters
+    # Final recommended settings
     data_dir = "./processed_chess_flat"
     train_frac = 0.8
     seed = 42
-    min_positions_per_game = 32  # because 16 support + 16 query
+    min_positions_per_game = 16  # because 8 support + 8 query
 
-    meta_iters = 2800
-    meta_batch_size = 12
-    k_support = 16
-    k_query = 16
+    meta_iters = 2600
+    meta_batch_size = 8
+    k_support = 8
+    k_query = 8
 
     inner_lr = 0.1
     inner_steps = 1
-    outer_lr = 5e-4
+    outer_lr = 1e-3
     lambda_value = 0.5
 
     val_every = 50
@@ -169,7 +183,9 @@ def main():
     val_meta_history = []
     val_meta_x = []
 
-    # Save config for reproducibility
+    best_val_meta = float("inf")
+
+    # Save config
     with open("run_config.txt", "w") as f:
         f.write(f"data_dir={data_dir}\n")
         f.write(f"train_frac={train_frac}\n")
@@ -210,11 +226,9 @@ def main():
 
         train_meta_history.append(meta_loss)
 
-        # Minimal training print
         first_gid = task_batch[0][-1]
         print(f"[TRAIN it {it}] gid={first_gid} meta={meta_loss:.4f}")
 
-        # Periodic validation
         if it % val_every == 0:
             val_meta = evaluate_meta_loss(
                 model=model,
@@ -227,17 +241,39 @@ def main():
                 inner_steps=inner_steps,
                 num_tasks=val_num_tasks,
             )
+
             val_meta_history.append(val_meta)
             val_meta_x.append(it)
             print(f"[VAL   it {it}] meta={val_meta:.4f}")
 
-        # Periodic checkpoint
-        if it % ckpt_every == 0:
+            if val_meta < best_val_meta:
+                best_val_meta = val_meta
+                save_checkpoint(
+                    filepath="chess_maml_checkpoint_best.pt",
+                    model=model,
+                    optimizer=optimizer,
+                    iteration=it,
+                    best_val_meta=best_val_meta,
+                    meta_iters=meta_iters,
+                    meta_batch_size=meta_batch_size,
+                    k_support=k_support,
+                    k_query=k_query,
+                    inner_lr=inner_lr,
+                    inner_steps=inner_steps,
+                    outer_lr=outer_lr,
+                    lambda_value=lambda_value,
+                    min_positions_per_game=min_positions_per_game,
+                    train_meta_history=train_meta_history,
+                    val_meta_history=val_meta_history,
+                    val_meta_x=val_meta_x,
+                )
+
             save_checkpoint(
-                filepath=f"chess_maml_checkpoint_it{it}.pt",
+                filepath="chess_maml_checkpoint_latest.pt",
                 model=model,
                 optimizer=optimizer,
                 iteration=it,
+                best_val_meta=best_val_meta,
                 meta_iters=meta_iters,
                 meta_batch_size=meta_batch_size,
                 k_support=k_support,
@@ -252,19 +288,34 @@ def main():
                 val_meta_x=val_meta_x,
             )
 
-    
-    # Save final graph
-    plt.figure(figsize=(10, 6))
-    plt.plot(range(1, len(train_meta_history) + 1), train_meta_history, label="Train Meta Loss")
-    plt.plot(val_meta_x, val_meta_history, label="Validation Meta Loss")
-    plt.xlabel("Iteration")
-    plt.ylabel("Meta Loss")
-    plt.title("MAML Training vs Validation Meta Loss")
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig("maml_train_val_loss.png", dpi=200)
-    print("Saved: maml_train_val_loss.png")
+        if it % ckpt_every == 0:
+            save_checkpoint(
+                filepath=f"chess_maml_checkpoint_it{it}.pt",
+                model=model,
+                optimizer=optimizer,
+                iteration=it,
+                best_val_meta=best_val_meta,
+                meta_iters=meta_iters,
+                meta_batch_size=meta_batch_size,
+                k_support=k_support,
+                k_query=k_query,
+                inner_lr=inner_lr,
+                inner_steps=inner_steps,
+                outer_lr=outer_lr,
+                lambda_value=lambda_value,
+                min_positions_per_game=min_positions_per_game,
+                train_meta_history=train_meta_history,
+                val_meta_history=val_meta_history,
+                val_meta_x=val_meta_x,
+            )
+
+    # Save graph
+    save_loss_plot(
+        train_meta_history=train_meta_history,
+        val_meta_history=val_meta_history,
+        val_meta_x=val_meta_x,
+        outpath="maml_train_val_loss.png",
+    )
 
     # Save final checkpoint
     save_checkpoint(
@@ -272,6 +323,7 @@ def main():
         model=model,
         optimizer=optimizer,
         iteration=meta_iters,
+        best_val_meta=best_val_meta,
         meta_iters=meta_iters,
         meta_batch_size=meta_batch_size,
         k_support=k_support,
