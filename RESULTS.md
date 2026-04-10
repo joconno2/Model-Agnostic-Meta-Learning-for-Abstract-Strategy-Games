@@ -34,36 +34,55 @@ val_tasks=128
 value_hidden=64
 ```
 
-## Console Log (last 30 of 127 lines)
+## latest.pt
+- Iteration: 50
+- Best val meta-loss: 0.4949
+- Latest train meta-loss: 0.5630
+- Train loss range (last 50): 0.5630 – 0.9944
+- Latest val meta-loss: 0.4949
+- Val loss range (last 10): 0.4949 – 0.4949
+
+## best.pt
+- Iteration: 50
+- Best val meta-loss: 0.4949
+- Latest train meta-loss: 0.5630
+- Train loss range (last 50): 0.5630 – 0.9944
+- Latest val meta-loss: 0.4949
+- Val loss range (last 10): 0.4949 – 0.4949
+
+## Loss Curve
+![Loss](runs/game_task_v1/loss.png)
+
+## Console Log (last 30 of 201 lines)
 ```
-[36m(MAMLActor pid=2678605, ip=136.244.224.200)[0m [TaskSampler] train: 28442 | val: 7111
-[36m(MAMLActor pid=2678608, ip=136.244.224.200)[0m [TaskSampler] indexed 2820000 positions across 38532 games
-[36m(MAMLActor pid=2678608, ip=136.244.224.200)[0m [TaskSampler] 35553 game-tasks after filtering
-[36m(MAMLActor pid=2678608, ip=136.244.224.200)[0m [TaskSampler] train: 28442 | val: 7111
-Pool ready: 25 actors across 6 hosts
-  {'NL214-Lin11166': 5, 'NL214-Lin11177': 4, 'NL214-Lin11168': 6, 'dsr4': 4, 'NL214-Lin11176': 2, 'NL214-Lin11170': 4}
-
-Training: 5000 iters, 128 tasks/iter (distributed across 25 actors)
-  inner: 5 steps @ lr=0.005
-  outer: Adam lr=0.0003, grad_clip=5.0
-
-[36m(MAMLActor pid=2678607, ip=136.244.224.200)[0m [TaskSampler] indexed 2820000 positions across 38532 games
-[36m(MAMLActor pid=2678607, ip=136.244.224.200)[0m [TaskSampler] 35553 game-tasks after filtering
-[36m(MAMLActor pid=2678607, ip=136.244.224.200)[0m [TaskSampler] train: 28442 | val: 7111
-[it     1] meta_loss=0.9402 | 28151ms | 28s
-[it     2] meta_loss=0.9531 | 28379ms | 57s
-[it     3] meta_loss=0.9580 | 28311ms | 85s
-[it     4] meta_loss=0.9544 | 28346ms | 113s
-[it     5] meta_loss=0.9331 | 28464ms | 142s
-[it     6] meta_loss=0.9394 | 28476ms | 170s
-[it     7] meta_loss=0.9477 | 27911ms | 198s
-[it     8] meta_loss=0.9304 | 28470ms | 227s
-[it     9] meta_loss=0.9319 | 28392ms | 255s
-[it    10] meta_loss=0.9944 | 28235ms | 283s
-[it    11] meta_loss=0.9090 | 28338ms | 311s
-[it    12] meta_loss=0.9105 | 27852ms | 339s
-[it    13] meta_loss=0.9395 | 28765ms | 368s
-[it    14] meta_loss=0.9399 | 28261ms | 396s
-[it    15] meta_loss=0.9632 | 28474ms | 425s
-[it    16] meta_loss=0.9388 | 28484ms | 453s
+[it    60] meta_loss=0.1439 | 28741ms | 1730s
+[it    61] meta_loss=0.1465 | 28487ms | 1759s
+[it    62] meta_loss=0.4227 | 28833ms | 1788s
+[it    63] meta_loss=0.3632 | 28674ms | 1816s
+[it    64] meta_loss=0.1544 | 27910ms | 1844s
+[it    65] meta_loss=0.1067 | 27864ms | 1872s
+[it    66] meta_loss=0.0851 | 27860ms | 1900s
+[it    67] meta_loss=0.0910 | 28525ms | 1928s
+[it    68] meta_loss=0.0782 | 28496ms | 1957s
+[it    69] meta_loss=0.0583 | 28465ms | 1985s
+[it    70] meta_loss=0.0746 | 28471ms | 2014s
+[it    71] meta_loss=0.0810 | 28065ms | 2042s
+[it    72] meta_loss=0.0935 | 28459ms | 2070s
+[it    73] meta_loss=0.0715 | 28533ms | 2099s
+[it    74] meta_loss=0.0631 | 28354ms | 2127s
+[it    75] meta_loss=0.0690 | 27514ms | 2155s
+[it    76] meta_loss=0.0852 | 28599ms | 2183s
+[it    77] meta_loss=0.1055 | 28469ms | 2212s
+[it    78] meta_loss=0.1481 | 28235ms | 2240s
+[it    79] meta_loss=0.1536 | 28641ms | 2269s
+[it    80] meta_loss=0.1819 | 28684ms | 2297s
+[it    81] meta_loss=0.2455 | 28509ms | 2326s
+[it    82] meta_loss=0.2546 | 27775ms | 2354s
+[it    83] meta_loss=0.2727 | 28413ms | 2382s
+[it    84] meta_loss=0.3270 | 28220ms | 2410s
+[it    85] meta_loss=0.3348 | 28124ms | 2439s
+[it    86] meta_loss=0.3939 | 28441ms | 2467s
+[it    87] meta_loss=0.4050 | 28674ms | 2496s
+[it    88] meta_loss=0.5826 | 28577ms | 2524s
+[it    89] meta_loss=0.6864 | 28007ms | 2552s
 ```
