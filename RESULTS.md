@@ -53,31 +53,8 @@ value_hidden=64
 ## Loss Curve
 ![Loss](runs/game_task_v1/loss.png)
 
-## Console Log (last 30 of 1469 lines)
+## Console Log (last 30 of 1492 lines)
 ```
-[it  1303] meta_loss=194.8135 | 28331ms | 37732s
-[it  1304] meta_loss=193.8699 | 28683ms | 37761s
-[it  1305] meta_loss=190.2187 | 28474ms | 37789s
-[it  1306] meta_loss=186.8876 | 28456ms | 37817s
-[it  1307] meta_loss=186.1749 | 27758ms | 37845s
-[it  1308] meta_loss=185.5964 | 27828ms | 37873s
-[it  1309] meta_loss=186.5468 | 28417ms | 37901s
-[it  1310] meta_loss=187.7093 | 28403ms | 37930s
-[it  1311] meta_loss=185.2330 | 27652ms | 37958s
-[it  1312] meta_loss=186.2227 | 28528ms | 37986s
-[it  1313] meta_loss=181.1278 | 28387ms | 38014s
-[it  1314] meta_loss=184.8105 | 28295ms | 38043s
-[it  1315] meta_loss=181.5400 | 28456ms | 38071s
-[it  1316] meta_loss=179.4102 | 28424ms | 38100s
-[it  1317] meta_loss=179.0476 | 28241ms | 38128s
-[it  1318] meta_loss=179.1138 | 28600ms | 38156s
-[it  1319] meta_loss=178.2998 | 28764ms | 38185s
-[it  1320] meta_loss=179.0792 | 28482ms | 38214s
-[it  1321] meta_loss=180.6423 | 28513ms | 38242s
-[it  1322] meta_loss=175.2314 | 28161ms | 38270s
-[it  1323] meta_loss=178.6195 | 28604ms | 38299s
-[it  1324] meta_loss=175.8098 | 28525ms | 38328s
-[it  1325] meta_loss=176.7320 | 28220ms | 38356s
 [it  1326] meta_loss=173.5028 | 28508ms | 38384s
 [it  1327] meta_loss=179.8909 | 28468ms | 38413s
 [it  1328] meta_loss=176.1572 | 28403ms | 38441s
@@ -85,4 +62,27 @@ value_hidden=64
 [it  1330] meta_loss=179.5979 | 28418ms | 38498s
 [it  1331] meta_loss=180.7185 | 28690ms | 38527s
 [it  1332] meta_loss=175.4451 | 28347ms | 38555s
+Log channel is reconnecting. Logs produced while the connection was down can be found on the head node of the cluster in `ray_client_server_[port].out`
+2026-04-11 03:00:56,203	WARNING dataclient.py:403 -- Encountered connection issues in the data channel. Attempting to reconnect.
+2026-04-11 03:01:26,410	WARNING dataclient.py:410 -- Failed to reconnect the data channel
+Traceback (most recent call last):
+  File "/home/csadmin/research/maml-dasg/train_value_anil_ray.py", line 336, in <module>
+    main()
+  File "/home/csadmin/research/maml-dasg/train_value_anil_ray.py", line 250, in main
+    grad_flat, meta_loss = pool.meta_step(
+  File "/home/csadmin/research/maml-dasg/maml_ray_pool.py", line 405, in meta_step
+    results = ray.get(futures)
+  File "/home/csadmin/research/maml-dasg/.venv/lib/python3.10/site-packages/ray/_private/auto_init_hook.py", line 21, in auto_init_wrapper
+    return fn(*args, **kwargs)
+  File "/home/csadmin/research/maml-dasg/.venv/lib/python3.10/site-packages/ray/_private/client_mode_hook.py", line 102, in wrapper
+    return getattr(ray, func.__name__)(*args, **kwargs)
+  File "/home/csadmin/research/maml-dasg/.venv/lib/python3.10/site-packages/ray/util/client/api.py", line 42, in get
+    return self.worker.get(vals, timeout=timeout)
+  File "/home/csadmin/research/maml-dasg/.venv/lib/python3.10/site-packages/ray/util/client/worker.py", line 433, in get
+    res = self._get(to_get, op_timeout)
+  File "/home/csadmin/research/maml-dasg/.venv/lib/python3.10/site-packages/ray/util/client/worker.py", line 454, in _get
+    for chunk in resp:
+  File "/home/csadmin/research/maml-dasg/.venv/lib/python3.10/site-packages/ray/util/client/worker.py", line 355, in _get_object_iterator
+    raise ConnectionError("Client is shutting down.")
+ConnectionError: Client is shutting down.
 ```
