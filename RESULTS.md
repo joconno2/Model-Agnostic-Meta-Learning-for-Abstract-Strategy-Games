@@ -35,11 +35,11 @@ value_hidden=64
 ```
 
 ## latest.pt
-- Iteration: 700
+- Iteration: 800
 - Best val meta-loss: 0.4949
-- Latest train meta-loss: 0.9139
-- Train loss range (last 50): 0.8473 – 0.9972
-- Latest val meta-loss: 0.9438
+- Latest train meta-loss: 0.9863
+- Train loss range (last 50): 0.7672 – 1.0856
+- Latest val meta-loss: 0.9561
 - Val loss range (last 10): 0.9438 – 3.3700
 
 ## best.pt
@@ -53,36 +53,36 @@ value_hidden=64
 ## Loss Curve
 ![Loss](runs/game_task_v1/loss.png)
 
-## Console Log (last 30 of 835 lines)
+## Console Log (last 30 of 962 lines)
 ```
-[it   682] meta_loss=0.8905 | 28530ms | 19723s
-[it   683] meta_loss=0.8857 | 28488ms | 19752s
-[it   684] meta_loss=0.8770 | 28616ms | 19780s
-[it   685] meta_loss=0.8810 | 28668ms | 19809s
-[it   686] meta_loss=0.8950 | 28255ms | 19837s
-[it   687] meta_loss=0.8609 | 28454ms | 19866s
-[it   688] meta_loss=0.8889 | 28569ms | 19894s
-[it   689] meta_loss=0.9059 | 28548ms | 19923s
-[it   690] meta_loss=0.8473 | 28508ms | 19951s
-[it   691] meta_loss=0.9150 | 28294ms | 19979s
-[it   692] meta_loss=0.8897 | 27977ms | 20007s
-[it   693] meta_loss=0.9157 | 28746ms | 20036s
-[it   694] meta_loss=0.8914 | 28451ms | 20065s
-[it   695] meta_loss=0.9468 | 28268ms | 20093s
-[it   696] meta_loss=0.9230 | 28517ms | 20121s
-[it   697] meta_loss=0.9003 | 28644ms | 20150s
-[it   698] meta_loss=0.9257 | 28075ms | 20178s
-[it   699] meta_loss=0.9066 | 28469ms | 20207s
-[it   700] meta_loss=0.9139 | 28716ms | 20235s
-  [VAL] meta_loss=0.9438 (best=0.4949)
-[it   701] meta_loss=0.8905 | 28362ms | 20290s
-[it   702] meta_loss=0.8742 | 28195ms | 20318s
-[it   703] meta_loss=0.9013 | 28306ms | 20347s
-[it   704] meta_loss=0.9425 | 28538ms | 20375s
-[it   705] meta_loss=0.9630 | 28225ms | 20403s
-[it   706] meta_loss=0.9090 | 27943ms | 20431s
-[it   707] meta_loss=0.9070 | 28182ms | 20459s
-[it   708] meta_loss=0.9217 | 28328ms | 20488s
-[it   709] meta_loss=0.9321 | 28487ms | 20516s
-[it   710] meta_loss=0.8901 | 28791ms | 20545s
+[it   806] meta_loss=0.9971 | 28341ms | 23326s
+[it   807] meta_loss=1.0145 | 28396ms | 23354s
+[it   808] meta_loss=1.0544 | 27652ms | 23382s
+[it   809] meta_loss=1.0351 | 28333ms | 23410s
+[it   810] meta_loss=1.0212 | 28428ms | 23439s
+[it   811] meta_loss=0.9919 | 27295ms | 23466s
+[it   812] meta_loss=1.0235 | 28468ms | 23494s
+[it   813] meta_loss=1.0464 | 28594ms | 23523s
+[it   814] meta_loss=1.0562 | 28412ms | 23551s
+[it   815] meta_loss=0.9961 | 28427ms | 23580s
+[it   816] meta_loss=0.9861 | 28625ms | 23608s
+[it   817] meta_loss=1.0208 | 28528ms | 23637s
+[it   818] meta_loss=1.0120 | 28367ms | 23665s
+[it   819] meta_loss=0.9943 | 28465ms | 23694s
+[it   820] meta_loss=1.0386 | 28289ms | 23722s
+[it   821] meta_loss=1.0318 | 28558ms | 23751s
+[it   822] meta_loss=0.9908 | 27719ms | 23778s
+[it   823] meta_loss=0.9586 | 28396ms | 23807s
+[it   824] meta_loss=0.9719 | 28339ms | 23835s
+[it   825] meta_loss=0.9768 | 28304ms | 23863s
+[it   826] meta_loss=1.0131 | 28430ms | 23892s
+[it   827] meta_loss=1.0151 | 28453ms | 23920s
+[it   828] meta_loss=1.0018 | 28279ms | 23949s
+[it   829] meta_loss=0.9738 | 28549ms | 23977s
+[it   830] meta_loss=0.9866 | 28439ms | 24006s
+[it   831] meta_loss=0.9858 | 28251ms | 24034s
+[it   832] meta_loss=0.9295 | 28314ms | 24062s
+[it   833] meta_loss=1.0080 | 28570ms | 24091s
+[it   834] meta_loss=0.9843 | 28560ms | 24119s
+[it   835] meta_loss=0.9948 | 31757ms | 24151s
 ```
