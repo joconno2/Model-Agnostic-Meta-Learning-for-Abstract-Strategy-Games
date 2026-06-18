@@ -2,8 +2,10 @@
 Value-only MAML task sampler with multiple task definitions.
 
 Task definitions:
-  - "game"    : one game = one task (original). WARNING: all positions share
-                the same value label z, so inner loop can only memorize it.
+  - "game"    : one game = one task (original). z alternates +1/-1 each ply
+                (side-to-move perspective). Positions within a game are highly
+                correlated, so inner loop tends to memorize rather than learn
+                generalizable features.
   - "opening" : one ECO opening code = one task. Support/query drawn from
                 different games with the same opening. Inner loop learns
                 "what does a good position look like in the Sicilian?"
@@ -29,8 +31,12 @@ class ValueTaskSampler:
     """
     Memory-safe MAML task sampler for value-only training.
 
-    Returns (sX, sy_val, qX, qy_val, task_id) tuples — no policy labels.
+    Returns (sX, sy_val, qX, qy_val, task_id) tuples -- no policy labels.
     """
+
+    # Max positions to keep in memory per grouped task (opening/player).
+    # 50 positions * 446 tasks * 14.6 KB = ~325 MB per actor.
+    MAX_POS_PER_TASK = 50
 
     def __init__(
         self,
@@ -64,6 +70,7 @@ class ValueTaskSampler:
             if db_path is None:
                 raise ValueError(f"task_mode={task_mode!r} requires db_path to the SQLite DB")
             self._build_grouped_tasks(db_path, task_mode)
+            self._preload_grouped_data()
         else:
             raise ValueError(f"Unknown task_mode={task_mode!r}. Use 'game', 'opening', or 'player'.")
 
@@ -110,7 +117,6 @@ class ValueTaskSampler:
             ).fetchall()
             group_key = lambda r: r["eco"]
         else:  # player
-            # Each player appears as white or black — treat both as the same task
             rows_w = conn.execute("SELECT id, white AS player FROM games WHERE white IS NOT NULL").fetchall()
             rows_b = conn.execute("SELECT id, black AS player FROM games WHERE black IS NOT NULL").fetchall()
             rows = rows_w + rows_b
@@ -123,7 +129,7 @@ class ValueTaskSampler:
         for r in rows:
             key = group_key(r)
             gid = int(r["id"])
-            if gid in self.game_counts:  # only games we have positions for
+            if gid in self.game_counts:
                 groups[key].append(gid)
 
         # Deduplicate game lists and filter by total positions
@@ -137,6 +143,66 @@ class ValueTaskSampler:
         self.all_task_ids = sorted(self.task_to_games.keys())
         print(f"[TaskSampler] {len(self.all_task_ids)} {mode}-tasks after filtering")
 
+    def _preload_grouped_data(self):
+        """
+        Pre-load positions for each grouped task into memory.
+
+        Streams through each shard once, distributing positions to their
+        task's in-memory buffer. Caps at MAX_POS_PER_TASK per task to
+        keep total memory around 1-2 GB.
+        """
+        # Invert: game_id -> task_id
+        game_to_task: Dict[int, str] = {}
+        for tid, gids in self.task_to_games.items():
+            for gid in gids:
+                game_to_task[gid] = tid
+
+        # Pre-allocate per-task collectors
+        task_X: Dict[str, List[np.ndarray]] = defaultdict(list)
+        task_yv: Dict[str, List[np.ndarray]] = defaultdict(list)
+        task_counts: Dict[str, int] = defaultdict(int)
+
+        cap = self.MAX_POS_PER_TASK
+
+        for shard_idx, path in enumerate(self.shard_files):
+            with np.load(path) as d:
+                X = d["X"]
+                yv = d["y_value"]
+                gids = d["game_id"].astype(np.int64)
+
+            # For each game in this shard, add positions to its task
+            for gid in np.unique(gids):
+                tid = game_to_task.get(int(gid))
+                if tid is None:
+                    continue
+                if task_counts[tid] >= cap:
+                    continue
+
+                mask = gids == gid
+                remaining = cap - task_counts[tid]
+                rows = np.where(mask)[0][:remaining]
+
+                task_X[tid].append(X[rows])
+                task_yv[tid].append(yv[rows])
+                task_counts[tid] += len(rows)
+
+        # Concatenate into final arrays
+        self._task_data: Dict[str, Tuple[np.ndarray, np.ndarray]] = {}
+        for tid in self.all_task_ids:
+            if tid in task_X and task_X[tid]:
+                self._task_data[tid] = (
+                    np.concatenate(task_X[tid], axis=0),
+                    np.concatenate(task_yv[tid], axis=0),
+                )
+
+        total_pos = sum(len(v[1]) for v in self._task_data.values())
+        mem_mb = sum(v[0].nbytes + v[1].nbytes for v in self._task_data.values()) / 1e6
+        print(f"[TaskSampler] preloaded {total_pos} positions for {len(self._task_data)} tasks ({mem_mb:.0f} MB)")
+
+        # Free the shard index -- no longer needed for grouped modes
+        del self.game_to_locs
+        del self.game_counts
+
     def _split_train_val(self, train_frac: float):
         ids = self.all_task_ids[:]
         self.rng.shuffle(ids)
@@ -146,7 +212,7 @@ class ValueTaskSampler:
         print(f"[TaskSampler] train: {len(self.train_task_ids)} | val: {len(self.val_task_ids)}")
 
     def _load_rows(self, refs: List[Tuple[int, int]]):
-        """Load specific rows from shards. Returns X [N,C,H,W] and y_value [N]."""
+        """Load specific rows from shards (game mode only). Returns X [N,C,H,W] and y_value [N]."""
         by_shard = defaultdict(list)
         for shard_idx, row_idx in refs:
             by_shard[shard_idx].append(row_idx)
@@ -164,20 +230,37 @@ class ValueTaskSampler:
         """
         Sample one task: k_support + k_query positions.
 
-        For game-tasks: all from the same game.
-        For opening/player-tasks: drawn from multiple games in the group.
+        For game-tasks: loads from disk via shard index.
+        For opening/player-tasks: samples from preloaded in-memory data.
 
         Returns (sX, sy_val, qX, qy_val, task_id).
         """
         pool = self.train_task_ids if split == "train" else self.val_task_ids
         total_needed = k_support + k_query
 
-        # Try until we find a task with enough positions
+        if hasattr(self, "_task_data"):
+            # Grouped mode: sample from preloaded data
+            for _ in range(100):
+                task_id = self.rng.choice(pool)
+                if task_id not in self._task_data:
+                    continue
+                X_all, yv_all = self._task_data[task_id]
+                if len(yv_all) < total_needed:
+                    continue
+                idx = self.rng.sample(range(len(yv_all)), total_needed)
+                idx = np.array(idx)
+                sX = X_all[idx[:k_support]]
+                sy_val = yv_all[idx[:k_support]]
+                qX = X_all[idx[k_support:]]
+                qy_val = yv_all[idx[k_support:]]
+                return sX, sy_val, qX, qy_val, task_id
+            raise RuntimeError(f"Could not find a task with >= {total_needed} positions after 100 tries")
+
+        # Game mode: load from disk
         for _ in range(100):
             task_id = self.rng.choice(pool)
             game_ids = self.task_to_games[task_id]
 
-            # Collect all position refs across all games in this task
             all_refs = []
             for gid in game_ids:
                 for shard_idx, local_rows in self.game_to_locs.get(gid, []):

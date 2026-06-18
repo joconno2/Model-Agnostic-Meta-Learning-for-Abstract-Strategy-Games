@@ -105,6 +105,8 @@ def main():
 
     # Ray
     parser.add_argument("--ray-address", default="ray://127.0.0.1:10001")
+    parser.add_argument("--auto-cluster", action="store_true",
+                        help="Auto-discover cluster head, tunnel if needed")
     parser.add_argument("--max-actors", type=int, default=None)
 
     # Output
@@ -133,6 +135,7 @@ def main():
 
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--train-frac", type=float, default=0.8)
+    parser.add_argument("--resume", default=None, help="Path to checkpoint .pt to resume from")
 
     args = parser.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
@@ -142,19 +145,24 @@ def main():
     from maml_ray_pool import MAMLRayPool
 
     repo_root = str(Path(__file__).parent.resolve())
-    print(f"Connecting to Ray at {args.ray_address} ...")
-    ray.init(
-        address=args.ray_address,
-        logging_level="WARNING",
-        runtime_env={
-            "working_dir": repo_root,
-            "excludes": [".git", ".venv", "runs", "__pycache__", "*.sqlite", "processed_*"],
-            # Workers need torch + numpy for the ANIL inner loop.
-            # These are installed on workers via install_worker_deps.py
-            # (one-time, not per-run). Don't use runtime_env pip for torch
-            # — it's 3GB and would install on every actor startup.
-        },
-    )
+    runtime_env = {
+        "working_dir": repo_root,
+        "excludes": [".git", ".venv", "runs", "__pycache__", "*.sqlite", "processed_*"],
+    }
+    if args.auto_cluster:
+        from aall_cluster import connect
+        state, tunnel = connect(
+            namespace="maml-dasg", verbose=True, log_to_driver=False,
+            runtime_env=runtime_env,
+        )
+        print(f"Auto-connected to cluster, head={state.head_ip}")
+    else:
+        print(f"Connecting to Ray at {args.ray_address} ...")
+        ray.init(
+            address=args.ray_address,
+            logging_level="WARNING",
+            runtime_env=runtime_env,
+        )
     cluster_res = ray.cluster_resources()
     print(f"Cluster: {int(cluster_res.get('CPU', 0))} CPUs")
 
@@ -170,7 +178,7 @@ def main():
     )
     print(f"Model: {model.total_param_count():,} params ({model.head_param_count():,} adapted)")
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.outer_lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.outer_lr, eps=1e-4)
     head_param_names = set(n for n, _ in model.head_params())
 
     # ---- Start actor pool ----
@@ -213,11 +221,24 @@ def main():
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
 
-    # ---- Training loop ----
+    # ---- Resume from checkpoint ----
+    start_iter = 0
     train_hist = []
     val_hist = []
     val_x = []
     best_val = float("inf")
+
+    if args.resume:
+        print(f"Resuming from {args.resume} ...")
+        ckpt = torch.load(args.resume, map_location="cpu", weights_only=False)
+        model.load_state_dict(ckpt["model_state_dict"])
+        optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+        start_iter = ckpt["iteration"]
+        best_val = ckpt["best_val_meta"]
+        train_hist = ckpt.get("train_meta_history", [])
+        val_hist = ckpt.get("val_meta_history", [])
+        val_x = ckpt.get("val_meta_x", [])
+        print(f"  Resumed at iteration {start_iter}, best_val={best_val:.4f}")
 
     histories = lambda: {
         "train_meta_history": train_hist,
@@ -234,7 +255,7 @@ def main():
     print(f"  outer: Adam lr={args.outer_lr}, grad_clip={args.max_grad_norm}")
     print()
 
-    for it in range(1, args.meta_iters + 1):
+    for it in range(start_iter + 1, args.meta_iters + 1):
         if stop_requested[0]:
             break
         if time.time() - t0 > max_seconds:

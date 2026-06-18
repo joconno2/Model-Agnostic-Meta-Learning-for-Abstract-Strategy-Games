@@ -92,7 +92,7 @@ class ValueNet(nn.Module):
         h = h.flatten(1)
         h = self.bottleneck(h)
         v = self.value_head(h).squeeze(-1)
-        return v
+        return torch.tanh(v)
 
     def trunk_params(self):
         """Parameters frozen in the inner loop."""

@@ -343,11 +343,33 @@ class MAMLRayPool:
             )
             self.actors.append(actor)
 
-        # Block until all actors are ready
-        ready_info = ray.get([a.ready.remote() for a in self.actors])
-        for info in ready_info:
-            host = info.get("host", "?")
-            self._hosts[host] = self._hosts.get(host, 0) + 1
+        # Block until actors are ready with a global timeout.
+        # ray.wait timeouts don't work reliably through the client protocol,
+        # so use ray.get with a single timeout for the whole batch.
+        ready_refs = [a.ready.remote() for a in self.actors]
+        try:
+            ready_info = ray.get(ready_refs, timeout=300)
+            for info in ready_info:
+                host = info.get("host", "?")
+                self._hosts[host] = self._hosts.get(host, 0) + 1
+        except ray.exceptions.GetTimeoutError:
+            # Some actors didn't init in time. Collect what we can.
+            print("  WARNING: not all actors initialized within 300s, collecting ready ones...")
+            live_actors = []
+            for ref, actor in zip(ready_refs, self.actors):
+                try:
+                    info = ray.get(ref, timeout=0)
+                    live_actors.append(actor)
+                    host = info.get("host", "?")
+                    self._hosts[host] = self._hosts.get(host, 0) + 1
+                except Exception:
+                    try:
+                        ray.kill(actor, no_restart=True)
+                    except Exception:
+                        pass
+            dropped = len(self.actors) - len(live_actors)
+            self.actors = live_actors
+            print(f"  WARNING: dropped {dropped} actor(s), continuing with {len(self.actors)}")
 
     @property
     def actor_count(self):
@@ -402,7 +424,16 @@ class MAMLRayPool:
             if n > 0
         ]
 
-        results = ray.get(futures)
+        try:
+            results = ray.get(futures, timeout=120)
+        except ray.exceptions.GetTimeoutError:
+            print("  WARNING: meta_step timed out (120s), collecting partial results")
+            results = []
+            for f in futures:
+                try:
+                    results.append(ray.get(f, timeout=0))
+                except Exception:
+                    pass
 
         # Aggregate
         total_tasks_done = sum(r["num_tasks"] for r in results)
@@ -444,7 +475,16 @@ class MAMLRayPool:
             if n > 0
         ]
 
-        results = ray.get(futures)
+        try:
+            results = ray.get(futures, timeout=120)
+        except ray.exceptions.GetTimeoutError:
+            print("  WARNING: val_loss timed out (120s), collecting partial results")
+            results = []
+            for f in futures:
+                try:
+                    results.append(ray.get(f, timeout=0))
+                except Exception:
+                    pass
 
         total_done = sum(r["num_tasks"] for r in results)
         if total_done == 0:
