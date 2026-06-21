@@ -109,38 +109,34 @@ def nn_eval(board, model, params, spec, device="cpu"):
     return v.item()
 
 
-def alpha_beta(board, depth, alpha, beta, eval_fn, maximizing=True):
-    if depth == 0 or board.is_game_over():
+def negamax(board, depth, alpha, beta, eval_fn):
+    """
+    Negamax with alpha-beta. eval_fn returns value from the SIDE-TO-MOVE
+    perspective, so we negate at each level. Returns (value, best_move) where
+    value is from the perspective of the side to move at this node.
+    """
+    if board.is_game_over():
+        # side to move has no escape -> losing for side to move
+        return -1.0e6 - depth, None
+    if depth == 0:
         return eval_fn(board), None
+    best = -float("inf")
     best_move = None
-    if maximizing:
-        best = -float("inf")
-        for move in board.legal_moves:
-            board.push(move)
-            val, _ = alpha_beta(board, depth - 1, alpha, beta, eval_fn, False)
-            board.pop()
-            if val > best:
-                best, best_move = val, move
-            alpha = max(alpha, val)
-            if beta <= alpha:
-                break
-        return best, best_move
-    else:
-        best = float("inf")
-        for move in board.legal_moves:
-            board.push(move)
-            val, _ = alpha_beta(board, depth - 1, alpha, beta, eval_fn, True)
-            board.pop()
-            if val < best:
-                best, best_move = val, move
-            beta = min(beta, val)
-            if beta <= alpha:
-                break
-        return best, best_move
+    for move in board.legal_moves:
+        board.push(move)
+        val, _ = negamax(board, depth - 1, -beta, -alpha, eval_fn)
+        val = -val
+        board.pop()
+        if val > best:
+            best, best_move = val, move
+        alpha = max(alpha, val)
+        if alpha >= beta:
+            break
+    return best, best_move
 
 
 def select_move_search(board, eval_fn, depth):
-    _, move = alpha_beta(board, depth, -float("inf"), float("inf"), eval_fn, True)
+    _, move = negamax(board, depth, -float("inf"), float("inf"), eval_fn)
     if move is None:
         moves = list(board.legal_moves)
         return moves[0] if moves else None
