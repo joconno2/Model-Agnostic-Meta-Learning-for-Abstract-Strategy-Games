@@ -21,7 +21,7 @@ import numpy as np
 from spec import UnifiedSpec, num_channels
 from encode_shogi import encode_sfen_to_unified
 
-OPENING_PLY = 4
+OPENING_PLY = 2  # board fingerprint after 1 move each; coarser = more games/opening
 
 
 def split_sfen(full_sfen):
