@@ -143,6 +143,32 @@ def select_move_search(board, eval_fn, depth):
     return move
 
 
+def select_move_nn_batched(board, model, params, spec, device="cpu"):
+    """
+    Depth-1 greedy with a single batched forward pass over all legal children.
+    negamax(depth 1): value(move) = -eval(child); pick argmax = argmin eval(child).
+    ~100x faster than per-position eval for shogi's wide branching.
+    """
+    moves = list(board.legal_moves)
+    if not moves:
+        return None
+    terminal_idx, child_tensors, child_moves = [], [], []
+    for mv in moves:
+        board.push(mv)
+        if board.is_game_over():
+            terminal_idx.append(mv)  # opponent has no move -> we just won
+        else:
+            child_tensors.append(board_to_tensor(board, spec))
+            child_moves.append(mv)
+        board.pop()
+    if terminal_idx:
+        return terminal_idx[0]  # immediate winning move
+    X = torch.tensor(np.stack(child_tensors), dtype=torch.float32, device=device)
+    with torch.no_grad():
+        vals = functional_call(model, params, (X,)).numpy()  # child = opp perspective
+    return child_moves[int(np.argmin(vals))]  # minimize opponent's value
+
+
 def select_move_random(board):
     moves = list(board.legal_moves)
     return random.choice(moves) if moves else None
@@ -288,6 +314,8 @@ def main():
     # is not tracked inside the search; instead we run per-opening matches.
     def make_nn_move(params):
         def f(board):
+            if args.depth == 1:
+                return select_move_nn_batched(board, model, params, spec, device)
             return select_move_search(
                 board, lambda b: nn_eval(b, model, params, spec, device), args.depth)
         return f
