@@ -141,6 +141,7 @@ def main():
     ap.add_argument("--chess-db", default="sf_openings.sqlite")
     ap.add_argument("--shogi-db", default="sf_shogi_openings.sqlite")
     ap.add_argument("--meta-iters", type=int, default=3000)
+    ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 
     Xc, yc, oc = load_game(args.chess, args.chess_db)
@@ -156,11 +157,11 @@ def main():
         Xte, yte, ote = Xc, yc, oc
         tgt = "chess"
 
-    tr_keys, val_keys = split_openings(otr)
-    te_keys, _ = split_openings(ote, frac=1.0)  # all target openings for cross eval
+    tr_keys, val_keys = split_openings(otr, seed=args.seed)
+    te_keys, _ = split_openings(ote, frac=1.0, seed=args.seed)  # all target openings for cross eval
 
-    print(f"\nMeta-training ANIL head on {args.train_game} ({len(tr_keys)} openings)...")
-    model = meta_train(Xtr, ytr, otr, tr_keys, args.meta_iters)
+    print(f"\nMeta-training ANIL head on {args.train_game} ({len(tr_keys)} openings) seed={args.seed}...")
+    model = meta_train(Xtr, ytr, otr, tr_keys, args.meta_iters, seed=args.seed)
 
     print(f"\n[within-game] {args.train_game} held-out openings adaptation curve:")
     wc = eval_curve(model, Xtr, ytr, otr, val_keys)
@@ -180,6 +181,18 @@ def main():
     z, a = cc[0][0], cc[5][0]
     print(f"\nVERDICT: {args.train_game}->{tgt} zero-shot {z:.4f} -> 5-step {a:.4f}  "
           f"(delta {z-a:+.4f}); within-game ceiling {wc[5][0]:.4f}")
+
+    import json, os
+    rec = {"train_game": args.train_game, "target": tgt, "seed": args.seed,
+           "meta_iters": args.meta_iters,
+           "within_game": {str(s): {"mse": m, "se": se} for s, (m, se) in wc.items()},
+           "cross_game": {str(s): {"mse": m, "se": se} for s, (m, se) in cc.items()},
+           "random_body_target": {str(s): rc[s][0] for s in rc}}
+    out = os.path.join("runs", f"xfer_maml_{args.train_game}2{tgt}_s{args.seed}.json")
+    os.makedirs("runs", exist_ok=True)
+    with open(out, "w") as f:
+        json.dump(rec, f, indent=2)
+    print(f"Saved: {out}")
 
 
 if __name__ == "__main__":

@@ -60,7 +60,7 @@ def curve(model, sampler, ids, tasks, base_params=None, device="cpu",
     return out, losses_by_step
 
 
-def run_seed(seed, joint_path, chess_path, data_dir, db_path, tasks):
+def run_seed(seed, joint_path, chess_path, data_dir, db_path, tasks, shogi_only_path=None):
     device = torch.device("cpu")
     res = {"seed": seed}
 
@@ -97,6 +97,14 @@ def run_seed(seed, joint_path, chess_path, data_dir, db_path, tasks):
     rb, _ = curve(joint, sampler, shogi_val, tasks, base_params=rnd, device=device, steps=(0, 5))
     probe["random_init"] = {k: rb[k]["mse"] for k in ("steps_0", "steps_5")}
     res["shogi_transfer_probe"] = probe
+
+    # 3. Joint vs shogi-only on the SAME held-out shogi openings (matched split).
+    if shogi_only_path:
+        print("  [3] joint vs shogi-only on matched shogi split")
+        so_model, _ = load_model(shogi_only_path, N_CHANNELS, device)
+        so, sos = curve(so_model, sampler, shogi_val, tasks, device=device)
+        res["shogi_only"] = so
+        res["shogi_only_paired_p"] = paired_ttest(sos[5], js[5])  # shogi-only vs joint @ 5 steps
     return res
 
 
@@ -106,8 +114,9 @@ def main():
     ap.add_argument("--chess-only", default="runs/disjoint_anil_sf_k64_s42/best.pt")
     ap.add_argument("--data", default="processed_sf_combined")
     ap.add_argument("--db", default="sf_combined_openings.sqlite")
-    ap.add_argument("--tasks-per-cell", type=int, default=400)
-    ap.add_argument("--seeds", default="42,123,456")
+    ap.add_argument("--shogi-only", default=None, help="shogi-only ckpt for matched comparison")
+    ap.add_argument("--tasks-per-cell", type=int, default=600)
+    ap.add_argument("--seeds", default="42,123,456,789,1337")
     ap.add_argument("--out", default="runs/joint_eval.json")
     args = ap.parse_args()
 
@@ -119,7 +128,7 @@ def main():
     for sd in seeds:
         print(f"\n{'#'*60}\n SEED {sd}\n{'#'*60}")
         allr.append(run_seed(sd, args.joint, args.chess_only, data_dir, db_path,
-                             args.tasks_per_cell))
+                             args.tasks_per_cell, shogi_only_path=args.shogi_only))
 
     with open(os.path.join(ROOT, args.out), "w") as f:
         json.dump(allr, f, indent=2)
@@ -143,6 +152,19 @@ def main():
                 if r.get("shogi_transfer_probe", {}).get(name)]
         if vals:
             print(f"   {name:14}: {np.mean(vals):.4f} +/- {np.std(vals):.4f}")
+
+    if any("shogi_only" in r for r in allr):
+        print("\n Joint vs shogi-only on matched shogi split (MSE, mean+/-std):")
+        for s in (0, 5):
+            jv = [r["joint_shogi"][f"steps_{s}"]["mse"] for r in allr]
+            sv = [r["shogi_only"][f"steps_{s}"]["mse"] for r in allr if "shogi_only" in r]
+            print(f"   steps {s}: joint {np.mean(jv):.4f}+/-{np.std(jv):.4f}  "
+                  f"shogi-only {np.mean(sv):.4f}+/-{np.std(sv):.4f}")
+        # paired t-test across seeds on 5-step seed-means
+        jv5 = np.array([r["joint_shogi"]["steps_5"]["mse"] for r in allr])
+        sv5 = np.array([r["shogi_only"]["steps_5"]["mse"] for r in allr if "shogi_only" in r])
+        if len(jv5) == len(sv5) and len(jv5) >= 2:
+            print(f"   joint helps shogi: delta {np.mean(sv5-jv5):+.4f}  paired-p {paired_ttest(list(sv5), list(jv5)):.2e}")
     print(f"\n Saved: {args.out}")
 
 

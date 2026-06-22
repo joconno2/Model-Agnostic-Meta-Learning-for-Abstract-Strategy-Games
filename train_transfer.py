@@ -76,33 +76,51 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--chess", default="feat_chess.npz")
     ap.add_argument("--shogi", default="feat_shogi.npz")
+    ap.add_argument("--seeds", default="42,123,456,789,1337")
+    ap.add_argument("--out", default="runs/transfer_plain.json")
     args = ap.parse_args()
 
     Xc, yc, gc = load(args.chess)
     Xs, ys, gs = load(args.shogi)
+    var_c, var_s = float((yc**2).mean()), float((ys**2).mean())
     print(f"chess {Xc.shape}  shogi {Xs.shape}")
-    print(f"variance (predict-mean MSE): chess {float((yc**2).mean()):.4f}  shogi {float((ys**2).mean()):.4f}")
+    print(f"variance (predict-mean MSE): chess {var_c:.4f}  shogi {var_s:.4f}")
 
-    ctr, cval = split_by_game(gc)
-    str_, sval = split_by_game(gs)
+    seeds = [int(s) for s in args.seeds.split(",")]
+    keys = ["chess_within", "shogi_within", "chess2shogi", "shogi2chess"]
+    acc = {m: {k: [] for k in keys} for m in ("raw", "per-game-standardized")}
 
-    for mode in ("raw", "per-game-standardized"):
-        print(f"\n===== {mode} =====")
-        if mode == "raw":
-            Xc_tr, Xc_va = Xc[ctr], Xc[cval]
-            Xs_tr, Xs_va = Xs[str_], Xs[sval]
-            Xc_all, Xs_all = Xc, Xs
-        else:
-            Xc_tr, Xc_va, Xc_all = standardize(Xc[ctr], Xc[cval], Xc)
-            Xs_tr, Xs_va, Xs_all = standardize(Xs[str_], Xs[sval], Xs)
+    for seed in seeds:
+        ctr, cval = split_by_game(gc, seed=seed)
+        str_, sval = split_by_game(gs, seed=seed)
+        for mode in ("raw", "per-game-standardized"):
+            if mode == "raw":
+                Xc_tr, Xc_va, Xc_all = Xc[ctr], Xc[cval], Xc
+                Xs_tr, Xs_va, Xs_all = Xs[str_], Xs[sval], Xs
+            else:
+                Xc_tr, Xc_va, Xc_all = standardize(Xc[ctr], Xc[cval], Xc)
+                Xs_tr, Xs_va, Xs_all = standardize(Xs[str_], Xs[sval], Xs)
+            ch = train_head(Xc_tr, yc[ctr], seed=seed)
+            sh = train_head(Xs_tr, ys[str_], seed=seed)
+            acc[mode]["chess_within"].append(mse(ch, Xc_va, yc[cval]))
+            acc[mode]["shogi_within"].append(mse(sh, Xs_va, ys[sval]))
+            acc[mode]["chess2shogi"].append(mse(ch, Xs_all, ys))
+            acc[mode]["shogi2chess"].append(mse(sh, Xc_all, yc))
 
-        chess_head = train_head(Xc_tr, yc[ctr])
-        shogi_head = train_head(Xs_tr, ys[str_])
-
-        print(f"  chess head -> chess val : {mse(chess_head, Xc_va, yc[cval]):.4f}  (within-game)")
-        print(f"  shogi head -> shogi val : {mse(shogi_head, Xs_va, ys[sval]):.4f}  (within-game)")
-        print(f"  chess head -> SHOGI all : {mse(chess_head, Xs_all, ys):.4f}  (TRANSFER; raw-board was 0.749)")
-        print(f"  shogi head -> CHESS all : {mse(shogi_head, Xc_all, yc):.4f}  (TRANSFER)")
+    import json, os
+    summary = {"variance": {"chess": var_c, "shogi": var_s}, "seeds": seeds, "modes": {}}
+    for mode in acc:
+        print(f"\n===== {mode} (mean +/- std over {len(seeds)} seeds) =====")
+        summary["modes"][mode] = {}
+        for k in keys:
+            v = np.array(acc[mode][k])
+            print(f"  {k:14}: {v.mean():.4f} +/- {v.std():.4f}")
+            summary["modes"][mode][k] = {"mean": float(v.mean()), "std": float(v.std()),
+                                          "vals": [float(x) for x in v]}
+    os.makedirs("runs", exist_ok=True)
+    with open(args.out, "w") as f:
+        json.dump(summary, f, indent=2)
+    print(f"\nSaved: {args.out}")
 
 
 if __name__ == "__main__":
