@@ -462,6 +462,7 @@ def main():
     parser.add_argument("--data", default=None, help=f"Path to {SF_DATA}")
     parser.add_argument("--db", default=None, help=f"Path to {SF_DB}")
     parser.add_argument("--ckpt", default=None, help=f"Path to {SF_CKPT}")
+    parser.add_argument("--out", default="runs/sf_eval.json")
     args = parser.parse_args()
 
     data_dir = args.data or os.path.join(ROOT, SF_DATA)
@@ -475,7 +476,7 @@ def main():
         print(f"\n{'#'*70}\n  SEED {seed}\n{'#'*70}")
         all_results.append(run_suite(args.tasks_per_cell, seed, data_dir, db_path, ckpt_path))
 
-    out_path = os.path.join(ROOT, "runs", "sf_eval.json")
+    out_path = os.path.join(ROOT, args.out)
     with open(out_path, "w") as f:
         json.dump(all_results, f, indent=2)
     print(f"\nSaved: {out_path}")

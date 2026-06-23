@@ -64,6 +64,31 @@ def load(d, name):
     return json.load(open(p)) if os.path.exists(p) else None
 
 
+def load_concat(d, pattern):
+    """Concatenate per-seed list JSONs matching pattern (e.g. sf_eval*.json)."""
+    out = []
+    for p in sorted(glob.glob(os.path.join(d, pattern))):
+        v = json.load(open(p))
+        if isinstance(v, list):
+            out.extend(v)
+    return out or None
+
+
+def load_transfer(d):
+    """Merge transfer_plain*.json: concat per-metric 'vals' across files."""
+    files = sorted(glob.glob(os.path.join(d, "transfer_plain*.json")))
+    if not files:
+        return None
+    base = json.load(open(files[0]))
+    for p in files[1:]:
+        x = json.load(open(p))
+        for mode in base["modes"]:
+            for k in base["modes"][mode]:
+                base["modes"][mode][k]["vals"] += x["modes"][mode][k]["vals"]
+        base["seeds"] += x.get("seeds", [])
+    return base
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default="runs_all")
@@ -74,18 +99,18 @@ def main():
     print("  MAML-DASG CROSS-GAME RESULTS  (mean [95% CI])")
     print("=" * 70)
 
-    # E1 chess within-game (sf_eval.json: list of per-seed dicts)
-    sf = load(D, "sf_eval.json")
+    # E1 chess within-game (sf_eval*.json: list of per-seed dicts)
+    sf = load_concat(D, "sf_eval*.json")
     if sf:
-        print("\n[E1] Chess within-game adaptation (held-out openings):")
+        print(f"\n[E1] Chess within-game adaptation (held-out openings) [{len(sf)} seeds]:")
         for s in (0, 1, 3, 5, 10):
             vals = [r["adaptation_curve"][f"steps_{s}"]["mse"] for r in sf]
             print(f"   steps {s:2d}: {fmt(*boot_ci(vals))}")
 
-    # E2/E3/E4/E5 joint_eval5.json
-    je = load(D, "joint_eval5.json")
+    # E2/E3/E4/E5 joint_eval5*.json
+    je = load_concat(D, "joint_eval5*.json")
     if je:
-        print("\n[E3] Joint per-game adaptation:")
+        print(f"\n[E3] Joint per-game adaptation [{len(je)} seeds]:")
         for game in ("joint_chess", "joint_shogi"):
             print(f"   {game}:")
             for s in (0, 1, 3, 5, 10):
@@ -105,9 +130,10 @@ def main():
             print(f"   joint helps shogi: delta {np.mean(np.array(sv)-np.array(jv)):+.4f}  paired-p {paired_t(sv, jv):.2e}")
 
     # E6 plain transfer
-    tp = load(D, "transfer_plain.json")
+    tp = load_transfer(D)
     if tp:
-        print("\n[E6] Plain shared-feature transfer (raw features, 5 seeds):")
+        n = len(tp["modes"]["raw"]["chess2shogi"]["vals"])
+        print(f"\n[E6] Plain shared-feature transfer (raw features, {n} seeds):")
         m = tp["modes"]["raw"]
         print(f"   variance baselines: chess {tp['variance']['chess']:.3f}  shogi {tp['variance']['shogi']:.3f}")
         for k in ("chess_within", "shogi_within", "chess2shogi", "shogi2chess"):
