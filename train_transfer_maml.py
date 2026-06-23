@@ -29,6 +29,10 @@ import torch
 import torch.nn as nn
 from torch.func import functional_call
 
+# Cap intra-op threads: these runs are launched many-wide; without this each
+# process grabs all cores and oversubscribes the box (load >> ncores).
+torch.set_num_threads(2)
+
 INNER_LR = 0.05
 K_SUPPORT = 32
 K_QUERY = 32

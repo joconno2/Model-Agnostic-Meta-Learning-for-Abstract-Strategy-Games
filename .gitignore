@@ -6,3 +6,7 @@ processed_*/
 *.sqlite
 *.pt
 *.png
+runs_all/
+watch_cross_game.log
+watch_cross_game.sh
+.stignore
