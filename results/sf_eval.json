@@ -1,0 +1,497 @@
+[
+  {
+    "seed": 42,
+    "tasks_per_cell": 600,
+    "min_games_per_opening": 10,
+    "disjoint_support_query": true,
+    "target": "stockfish_centipawn (y_value, [-1,1])",
+    "k_support": 64,
+    "k_query": 64,
+    "ckpt_val_meta": 0.10577896496397443,
+    "val_openings": 50,
+    "adaptation_curve": {
+      "steps_0": {
+        "mse": 0.2042210991308093,
+        "ci_low": 0.20024173042426507,
+        "ci_high": 0.20809033224980036,
+        "std": 0.04882547564532634,
+        "n": 600,
+        "elapsed_s": 67.9
+      },
+      "steps_1": {
+        "mse": 0.14436355646078786,
+        "ci_low": 0.1411523433836798,
+        "ci_high": 0.14770606000597278,
+        "std": 0.040584440261302285,
+        "n": 600,
+        "elapsed_s": 17.0
+      },
+      "steps_3": {
+        "mse": 0.11694108470653494,
+        "ci_low": 0.11378057340780894,
+        "ci_high": 0.12010895013809204,
+        "std": 0.03965343483584606,
+        "n": 600,
+        "elapsed_s": 10.8
+      },
+      "steps_5": {
+        "mse": 0.11469829982767503,
+        "ci_low": 0.11166804198796551,
+        "ci_high": 0.11776830170303583,
+        "std": 0.03843984584135701,
+        "n": 600,
+        "elapsed_s": 17.0
+      },
+      "steps_10": {
+        "mse": 0.11353608137617509,
+        "ci_low": 0.11066621946170926,
+        "ci_high": 0.11654844051847855,
+        "std": 0.03749461082592905,
+        "n": 600,
+        "elapsed_s": 42.0
+      }
+    },
+    "adaptation_vs_zeroshot_p": 1.8462055464640312e-140,
+    "adaptation_gain_mse": 0.08952279930313427,
+    "baselines": {
+      "random_trunk_steps_0": {
+        "mse": 0.26127216894179583,
+        "ci_low": 0.2559748335555196,
+        "ci_high": 0.26654309301326673,
+        "n": 600
+      },
+      "random_trunk_steps_5": {
+        "mse": 0.25890711645285286,
+        "ci_low": 0.2543907751515508,
+        "ci_high": 0.2635970114792387,
+        "n": 600
+      },
+      "random_trunk_steps_10": {
+        "mse": 0.2598238792642951,
+        "ci_low": 0.2545964658384522,
+        "ci_high": 0.26504756038387617,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_0": {
+        "mse": 0.25834953555216394,
+        "ci_low": 0.253263903396825,
+        "ci_high": 0.2630887681494157,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_5": {
+        "mse": 0.25805596880614756,
+        "ci_low": 0.25370744357506436,
+        "ci_high": 0.2627777214596669,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_10": {
+        "mse": 0.257212702439477,
+        "ci_low": 0.2522896575493117,
+        "ci_high": 0.2623561442891757,
+        "n": 600
+      }
+    },
+    "cca": {
+      "mean_corr": 0.9778916770083279,
+      "std_corr": 0.00892423168760759,
+      "n": 100,
+      "note": "Pearson correlation between pre- and post-adaptation value predictions. Low correlation = adaptation changes predictions = the inner loop matters."
+    }
+  },
+  {
+    "seed": 123,
+    "tasks_per_cell": 600,
+    "min_games_per_opening": 10,
+    "disjoint_support_query": true,
+    "target": "stockfish_centipawn (y_value, [-1,1])",
+    "k_support": 64,
+    "k_query": 64,
+    "ckpt_val_meta": 0.10577896496397443,
+    "val_openings": 50,
+    "adaptation_curve": {
+      "steps_0": {
+        "mse": 0.20055439439912637,
+        "ci_low": 0.19684259163836637,
+        "ci_high": 0.20444457740833363,
+        "std": 0.04784873108462781,
+        "n": 600,
+        "elapsed_s": 62.7
+      },
+      "steps_1": {
+        "mse": 0.13764912702143192,
+        "ci_low": 0.13437591210007668,
+        "ci_high": 0.14075610325982174,
+        "std": 0.04228693110599653,
+        "n": 600,
+        "elapsed_s": 5.9
+      },
+      "steps_3": {
+        "mse": 0.10882614593332013,
+        "ci_low": 0.10602974078307549,
+        "ci_high": 0.11162456951414546,
+        "std": 0.035441100796684534,
+        "n": 600,
+        "elapsed_s": 14.8
+      },
+      "steps_5": {
+        "mse": 0.10926488867029548,
+        "ci_low": 0.10613472977653146,
+        "ci_high": 0.11268581768497825,
+        "std": 0.03918323368230053,
+        "n": 600,
+        "elapsed_s": 21.9
+      },
+      "steps_10": {
+        "mse": 0.10645033646995823,
+        "ci_low": 0.10371077861015995,
+        "ci_high": 0.10929757915437222,
+        "std": 0.036379094596406994,
+        "n": 600,
+        "elapsed_s": 25.5
+      }
+    },
+    "adaptation_vs_zeroshot_p": 6.390397701356049e-153,
+    "adaptation_gain_mse": 0.09128950572883089,
+    "baselines": {
+      "random_trunk_steps_0": {
+        "mse": 0.2598819452400009,
+        "ci_low": 0.2548826359336575,
+        "ci_high": 0.2649955394243201,
+        "n": 600
+      },
+      "random_trunk_steps_5": {
+        "mse": 0.2652536091580987,
+        "ci_low": 0.26021298074473936,
+        "ci_high": 0.2706038297836979,
+        "n": 600
+      },
+      "random_trunk_steps_10": {
+        "mse": 0.26117514198025066,
+        "ci_low": 0.25626279865701995,
+        "ci_high": 0.265761957578361,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_0": {
+        "mse": 0.2641538095101714,
+        "ci_low": 0.25919650845229625,
+        "ci_high": 0.2692712009946505,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_5": {
+        "mse": 0.2619183242941896,
+        "ci_low": 0.25685278185953697,
+        "ci_high": 0.2668218008180459,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_10": {
+        "mse": 0.2659117489308119,
+        "ci_low": 0.2608242251103123,
+        "ci_high": 0.27100341018289326,
+        "n": 600
+      }
+    },
+    "cca": {
+      "mean_corr": 0.9774735216046385,
+      "std_corr": 0.007071956065970082,
+      "n": 100,
+      "note": "Pearson correlation between pre- and post-adaptation value predictions. Low correlation = adaptation changes predictions = the inner loop matters."
+    }
+  },
+  {
+    "seed": 456,
+    "tasks_per_cell": 600,
+    "min_games_per_opening": 10,
+    "disjoint_support_query": true,
+    "target": "stockfish_centipawn (y_value, [-1,1])",
+    "k_support": 64,
+    "k_query": 64,
+    "ckpt_val_meta": 0.10577896496397443,
+    "val_openings": 50,
+    "adaptation_curve": {
+      "steps_0": {
+        "mse": 0.1987898665294051,
+        "ci_low": 0.19514888638009628,
+        "ci_high": 0.20256496522575618,
+        "std": 0.04615345293779588,
+        "n": 600,
+        "elapsed_s": 70.6
+      },
+      "steps_1": {
+        "mse": 0.13646014168237647,
+        "ci_low": 0.13328393029049038,
+        "ci_high": 0.13955159181108076,
+        "std": 0.039429856463640056,
+        "n": 600,
+        "elapsed_s": 20.0
+      },
+      "steps_3": {
+        "mse": 0.10663884632910291,
+        "ci_low": 0.10394677052895228,
+        "ci_high": 0.10940996511528889,
+        "std": 0.03474555414410886,
+        "n": 600,
+        "elapsed_s": 13.9
+      },
+      "steps_5": {
+        "mse": 0.10376013578226169,
+        "ci_low": 0.1008129917147259,
+        "ci_high": 0.10680965764448047,
+        "std": 0.03624630610315373,
+        "n": 600,
+        "elapsed_s": 31.8
+      },
+      "steps_10": {
+        "mse": 0.10703084253395598,
+        "ci_low": 0.10440775939573844,
+        "ci_high": 0.10977135193844637,
+        "std": 0.03418193343497646,
+        "n": 600,
+        "elapsed_s": 25.6
+      }
+    },
+    "adaptation_vs_zeroshot_p": 1.1192227717289941e-170,
+    "adaptation_gain_mse": 0.09502973074714342,
+    "baselines": {
+      "random_trunk_steps_0": {
+        "mse": 0.27021428701778255,
+        "ci_low": 0.2655731251214941,
+        "ci_high": 0.2751958347981175,
+        "n": 600
+      },
+      "random_trunk_steps_5": {
+        "mse": 0.26571508090943097,
+        "ci_low": 0.26118732896943886,
+        "ci_high": 0.2701925266037385,
+        "n": 600
+      },
+      "random_trunk_steps_10": {
+        "mse": 0.2613131423915426,
+        "ci_low": 0.25686486570785444,
+        "ci_high": 0.26623561192303896,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_0": {
+        "mse": 0.2645461418728034,
+        "ci_low": 0.25972940588990845,
+        "ci_high": 0.2693994213392337,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_5": {
+        "mse": 0.2665839193140467,
+        "ci_low": 0.2615365056941907,
+        "ci_high": 0.2711703361198306,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_10": {
+        "mse": 0.26599266295631724,
+        "ci_low": 0.2614467071990172,
+        "ci_high": 0.27047807975361743,
+        "n": 600
+      }
+    },
+    "cca": {
+      "mean_corr": 0.9789375666605252,
+      "std_corr": 0.006531498598762218,
+      "n": 100,
+      "note": "Pearson correlation between pre- and post-adaptation value predictions. Low correlation = adaptation changes predictions = the inner loop matters."
+    }
+  },
+  {
+    "seed": 789,
+    "tasks_per_cell": 600,
+    "min_games_per_opening": 10,
+    "disjoint_support_query": true,
+    "target": "stockfish_centipawn (y_value, [-1,1])",
+    "k_support": 64,
+    "k_query": 64,
+    "ckpt_val_meta": 0.10577896496397443,
+    "val_openings": 50,
+    "adaptation_curve": {
+      "steps_0": {
+        "mse": 0.19517407182604074,
+        "ci_low": 0.19180998763690393,
+        "ci_high": 0.1984738797446092,
+        "std": 0.042649248885990095,
+        "n": 600,
+        "elapsed_s": 69.4
+      },
+      "steps_1": {
+        "mse": 0.1413888976102074,
+        "ci_low": 0.13814927361284693,
+        "ci_high": 0.14472081305459142,
+        "std": 0.040680862974861065,
+        "n": 600,
+        "elapsed_s": 20.4
+      },
+      "steps_3": {
+        "mse": 0.10712676820034782,
+        "ci_low": 0.10403997026383877,
+        "ci_high": 0.11009920168668032,
+        "std": 0.03620900720122115,
+        "n": 600,
+        "elapsed_s": 29.2
+      },
+      "steps_5": {
+        "mse": 0.10733441894873977,
+        "ci_low": 0.10477299212788542,
+        "ci_high": 0.10983782559012373,
+        "std": 0.032771907048865415,
+        "n": 600,
+        "elapsed_s": 17.7
+      },
+      "steps_10": {
+        "mse": 0.10701238748927912,
+        "ci_low": 0.10435653638094664,
+        "ci_high": 0.10991631113613645,
+        "std": 0.035160521336616915,
+        "n": 600,
+        "elapsed_s": 23.6
+      }
+    },
+    "adaptation_vs_zeroshot_p": 8.889494916418039e-169,
+    "adaptation_gain_mse": 0.08783965287730097,
+    "baselines": {
+      "random_trunk_steps_0": {
+        "mse": 0.26479262714584667,
+        "ci_low": 0.2601553442577521,
+        "ci_high": 0.2697235855460167,
+        "n": 600
+      },
+      "random_trunk_steps_5": {
+        "mse": 0.2667567520340284,
+        "ci_low": 0.2620042155434688,
+        "ci_high": 0.2716639485458533,
+        "n": 600
+      },
+      "random_trunk_steps_10": {
+        "mse": 0.26110085846235354,
+        "ci_low": 0.25633825023969015,
+        "ci_high": 0.2659135197723905,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_0": {
+        "mse": 0.26097657715280853,
+        "ci_low": 0.25614338343342147,
+        "ci_high": 0.26573153721789516,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_5": {
+        "mse": 0.2642325635626912,
+        "ci_low": 0.2595626730223497,
+        "ci_high": 0.2687043777604898,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_10": {
+        "mse": 0.261044279076159,
+        "ci_low": 0.25601539718608063,
+        "ci_high": 0.2657959123700857,
+        "n": 600
+      }
+    },
+    "cca": {
+      "mean_corr": 0.9782944108765608,
+      "std_corr": 0.007740449626235236,
+      "n": 100,
+      "note": "Pearson correlation between pre- and post-adaptation value predictions. Low correlation = adaptation changes predictions = the inner loop matters."
+    }
+  },
+  {
+    "seed": 1337,
+    "tasks_per_cell": 600,
+    "min_games_per_opening": 10,
+    "disjoint_support_query": true,
+    "target": "stockfish_centipawn (y_value, [-1,1])",
+    "k_support": 64,
+    "k_query": 64,
+    "ckpt_val_meta": 0.10577896496397443,
+    "val_openings": 50,
+    "adaptation_curve": {
+      "steps_0": {
+        "mse": 0.1973766236876448,
+        "ci_low": 0.19389630174885195,
+        "ci_high": 0.20091016381978988,
+        "std": 0.042353471816976136,
+        "n": 600,
+        "elapsed_s": 69.2
+      },
+      "steps_1": {
+        "mse": 0.13799116671706238,
+        "ci_low": 0.13506899231423936,
+        "ci_high": 0.14108750727027655,
+        "std": 0.03732378103726991,
+        "n": 600,
+        "elapsed_s": 19.4
+      },
+      "steps_3": {
+        "mse": 0.10906333584338426,
+        "ci_low": 0.10634544077018897,
+        "ci_high": 0.11182298987482985,
+        "std": 0.03430361456551319,
+        "n": 600,
+        "elapsed_s": 38.1
+      },
+      "steps_5": {
+        "mse": 0.10908288625379403,
+        "ci_low": 0.10624549319967627,
+        "ci_high": 0.11209224977220099,
+        "std": 0.03625678320239003,
+        "n": 600,
+        "elapsed_s": 14.3
+      },
+      "steps_10": {
+        "mse": 0.10581373452829818,
+        "ci_low": 0.10323565712509056,
+        "ci_high": 0.10841503858566284,
+        "std": 0.03356240832534274,
+        "n": 600,
+        "elapsed_s": 22.2
+      }
+    },
+    "adaptation_vs_zeroshot_p": 1.8952129737120445e-170,
+    "adaptation_gain_mse": 0.08829373743385077,
+    "baselines": {
+      "random_trunk_steps_0": {
+        "mse": 0.2606580796216925,
+        "ci_low": 0.25567344695329663,
+        "ci_high": 0.2653838939964771,
+        "n": 600
+      },
+      "random_trunk_steps_5": {
+        "mse": 0.2570929429680109,
+        "ci_low": 0.2526293717076381,
+        "ci_high": 0.261812478415668,
+        "n": 600
+      },
+      "random_trunk_steps_10": {
+        "mse": 0.25822062832613785,
+        "ci_low": 0.2534347050637007,
+        "ci_high": 0.26323405822118123,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_0": {
+        "mse": 0.26047729240109524,
+        "ci_low": 0.25558138590306045,
+        "ci_high": 0.26543453606466455,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_5": {
+        "mse": 0.2600672013188402,
+        "ci_low": 0.2554390702396631,
+        "ci_high": 0.2649932153026263,
+        "n": 600
+      },
+      "meta_trunk_random_head_steps_10": {
+        "mse": 0.25515516590327025,
+        "ci_low": 0.25032212448616825,
+        "ci_high": 0.2599519682303071,
+        "n": 600
+      }
+    },
+    "cca": {
+      "mean_corr": 0.9789474817861632,
+      "std_corr": 0.007351909387212815,
+      "n": 100,
+      "note": "Pearson correlation between pre- and post-adaptation value predictions. Low correlation = adaptation changes predictions = the inner loop matters."
+    }
+  }
+]

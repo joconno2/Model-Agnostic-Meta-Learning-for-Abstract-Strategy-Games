@@ -1,0 +1,35 @@
+{
+  "checkpoint": "runs/joint_sf_k64_s42/best.pt",
+  "depth": 1,
+  "games_per_opening": 25,
+  "results": {
+    "NN-adapted_vs_NN-base": {
+      "wins_a": 87,
+      "wins_b": 74,
+      "draws": 39,
+      "total": 200,
+      "win_rate_a": 0.5325
+    },
+    "NN-base_vs_Material": {
+      "wins_a": 162,
+      "wins_b": 38,
+      "draws": 0,
+      "total": 200,
+      "win_rate_a": 0.81
+    },
+    "NN-base_vs_Random": {
+      "wins_a": 199,
+      "wins_b": 0,
+      "draws": 1,
+      "total": 200,
+      "win_rate_a": 0.9975
+    },
+    "Material_vs_Random": {
+      "wins_a": 197,
+      "wins_b": 1,
+      "draws": 2,
+      "total": 200,
+      "win_rate_a": 0.99
+    }
+  }
+}
