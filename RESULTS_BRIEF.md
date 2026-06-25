@@ -37,6 +37,12 @@ Joint net in alpha-beta (depth 1), n=200/matchup:
 - Material vs Random 99.0% (sanity; material is a real baseline, net still beats it 4:1)
 - NN-adapted vs NN-base 53.2% [46.3, 60.0] — **NS**. Adaptation lowers value MSE but rarely changes the chosen move (99.2% greedy move agreement). Honest limitation.
 
+Chess gameplay (same protocol, n=200): drawish at depth 1 (160+/200 draws), NN vs Material only
+53.0% [46.1, 59.8], NN-adapted vs NN-base 47.2% NS. Depth-1 chess shuffles to draws; shogi is the
+decisive practical result. **Consistent cross-game finding: adaptation improves the value estimate,
+not move selection, in both games.** A decisive chess gameplay number would need depth 2–3 (much
+slower); not pursued — shogi already answers the practical-test critique.
+
 ## Headline
 Cross-game position-value transfer requires a shared abstraction. Raw representations
 cannot do it (transfer worse than random; joint training no better than single-game);

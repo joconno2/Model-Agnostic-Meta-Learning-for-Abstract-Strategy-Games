@@ -157,14 +157,16 @@ def main():
             if rb:
                 print(f"     random-body 5-step: {fmt(*boot_ci(rb))}")
 
-    # E8 gameplay
-    gp = load(D, "shogi_gameplay.json")
-    if gp:
-        print("\n[E8] Shogi gameplay (win rate, Wilson 95% CI):")
-        for key, r in gp["results"].items():
-            w = r["wins_a"] + 0.5 * r["draws"]
-            p, lo, hi = wilson(w, r["total"])
-            print(f"   {key:28}: {p:.1%} [{lo:.1%}, {hi:.1%}]  (n={r['total']})")
+    # E8 gameplay (shogi + chess)
+    for game, fname in [("Shogi", "shogi_gameplay.json"), ("Chess", "chess_gameplay.json")]:
+        gp = load(D, fname)
+        if gp:
+            print(f"\n[E8] {game} gameplay (win rate, Wilson 95% CI):")
+            for key, r in gp["results"].items():
+                w = r["wins_a"] + 0.5 * r["draws"]
+                p, lo, hi = wilson(w, r["total"])
+                print(f"   {key:28}: {p:.1%} [{lo:.1%}, {hi:.1%}]  "
+                      f"({r['wins_a']}W/{r['draws']}D/{r['wins_b']}L, n={r['total']})")
 
 
 if __name__ == "__main__":

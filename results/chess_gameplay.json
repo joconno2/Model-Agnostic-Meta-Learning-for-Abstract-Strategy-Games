@@ -1,0 +1,35 @@
+{
+  "checkpoint": "runs/disjoint_anil_sf_k64_s42/best.pt",
+  "depth": 1,
+  "games_per_opening": 25,
+  "results": {
+    "NN-adapted_vs_NN-base": {
+      "wins_a": 13,
+      "wins_b": 24,
+      "draws": 163,
+      "total": 200,
+      "win_rate_a": 0.4725
+    },
+    "NN-base_vs_Material": {
+      "wins_a": 25,
+      "wins_b": 13,
+      "draws": 162,
+      "total": 200,
+      "win_rate_a": 0.53
+    },
+    "NN-base_vs_Random": {
+      "wins_a": 91,
+      "wins_b": 0,
+      "draws": 109,
+      "total": 200,
+      "win_rate_a": 0.7275
+    },
+    "Material_vs_Random": {
+      "wins_a": 57,
+      "wins_b": 0,
+      "draws": 143,
+      "total": 200,
+      "win_rate_a": 0.6425
+    }
+  }
+}

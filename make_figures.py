@@ -147,22 +147,26 @@ def main():
     ax.legend(); ax.grid(alpha=0.3)
     fig.tight_layout(); fig.savefig(os.path.join(O, "fig3_fewshot_curves.png"), dpi=160); plt.close(fig)
 
-    # ---- Fig 4: gameplay win rates ----
-    fig, ax = plt.subplots(figsize=(6.5, 4))
-    order = ["NN-base_vs_Material", "NN-base_vs_Random", "NN-adapted_vs_NN-base", "Material_vs_Random"]
-    labs, ps, los, his = [], [], [], []
-    for k in order:
-        if k in gp["results"]:
-            r = gp["results"][k]
+    # ---- Fig 4: gameplay win rates (shogi vs chess, grouped) ----
+    cg_path = os.path.join(D, "chess_gameplay.json")
+    cg = json.load(open(cg_path)) if os.path.exists(cg_path) else None
+    order = ["NN-base_vs_Material", "NN-base_vs_Random", "NN-adapted_vs_NN-base"]
+    labs = ["NN vs\nMaterial", "NN vs\nRandom", "NN-adapted\nvs NN-base"]
+    fig, ax = plt.subplots(figsize=(7.5, 4.2))
+    xs = np.arange(len(order)); w = 0.38
+    for off, data, name, col in [(-w/2, gp, "shogi", "#d62728"), (w/2, cg, "chess", "#1f77b4")]:
+        if not data:
+            continue
+        ps, lo_e, hi_e = [], [], []
+        for k in order:
+            r = data["results"][k]
             p, lo, hi = wilson(r["wins_a"] + 0.5 * r["draws"], r["total"])
-            labs.append(k.replace("_vs_", "\nvs ")); ps.append(p * 100)
-            los.append((p - lo) * 100); his.append((hi - p) * 100)
-    ax.bar(range(len(labs)), ps, yerr=[los, his], capsize=5,
-           color=["#2e7d32", "#66bb6a", "#9e9e9e", "#bdbdbd"][:len(labs)], width=0.65)
+            ps.append(p * 100); lo_e.append((p - lo) * 100); hi_e.append((hi - p) * 100)
+        ax.bar(xs + off, ps, w, yerr=[lo_e, hi_e], capsize=4, color=col, label=name)
     ax.axhline(50, ls="--", color="gray", lw=1)
-    ax.set_xticks(range(len(labs))); ax.set_xticklabels(labs, fontsize=8)
-    ax.set_ylabel("Win rate (%)"); ax.set_ylim(0, 105)
-    ax.set_title(f"Shogi gameplay (n={gp['results'][order[0]]['total']}/matchup, Wilson 95% CI)")
+    ax.set_xticks(xs); ax.set_xticklabels(labs, fontsize=9)
+    ax.set_ylabel("Win rate (%)"); ax.set_ylim(0, 105); ax.legend(title="game")
+    ax.set_title("Gameplay (n=200/matchup, Wilson 95% CI)\nshogi decisive; chess draw-heavy at depth 1; adaptation NS in both")
     ax.grid(axis="y", alpha=0.3)
     fig.tight_layout(); fig.savefig(os.path.join(O, "fig4_gameplay.png"), dpi=160); plt.close(fig)
 
